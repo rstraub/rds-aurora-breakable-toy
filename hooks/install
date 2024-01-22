@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Installs the git hooks for the project
+echo "Removing old git hooks..."
+rm $PWD/.git/hooks/pre-commit 2> /dev/null || true
+rm $PWD/.git/hooks/pre-push 2> /dev/null || true
+
+echo "Installing git hooks..."
+ln -s $PWD/hooks/pre-commit $PWD/.git/hooks/pre-commit
+ln -s $PWD/hooks/pre-push $PWD/.git/hooks/pre-push

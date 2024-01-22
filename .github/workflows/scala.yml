@@ -1,0 +1,22 @@
+name: Scala CI
+
+on:
+    push:
+        branches: [ main ]
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    build:
+
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4.1.1
+            -   name: Set up JDK
+                uses: actions/setup-java@v3.13.0
+                with:
+                    java-version: '21'
+                    distribution: 'temurin'
+            -   name: Quality Check
+                run: ./sbtx clean coverage test scalafmtCheckAll "scalafixAll --check" coverageReport

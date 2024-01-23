@@ -7,7 +7,10 @@ import doobie.implicits._
 import doobie.implicits.javasql._
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.auth.credentials.{
+  AwsBasicCredentials,
+  StaticCredentialsProvider
+}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.rds.RdsClient
 import com.typesafe.scalalogging.StrictLogging
@@ -45,39 +48,47 @@ object Main extends App with StrictLogging {
   }
 
   private def crud(dbConfig: DbConfig) = {
-      val xa = Transactor.fromDriverManager[IO](
-         driver =  "org.postgresql.Driver",     // driver classname
-          url = s"jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/${dbConfig.database}",     // connect URL (driver-specific)
-          user =  dbConfig.username,                  // user
-          password = dbConfig.password     ,                     // password
-        logHandler = None
-      )
+    val xa = Transactor.fromDriverManager[IO](
+      driver = "org.postgresql.Driver", // driver classname
+      url =
+        s"jdbc:postgresql://${dbConfig.host}:${dbConfig.port}/${dbConfig.database}", // connect URL (driver-specific)
+      user = dbConfig.username, // user
+      password = dbConfig.password, // password
+      logHandler = None
+    )
 
-      val drop = sql"drop table if exists todos".update.run
+    val drop = sql"drop table if exists todos".update.run
 
-      val create =
-          sql"create table if not exists todos (description TEXT NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)".update.run
+    val create =
+      sql"create table if not exists todos (description TEXT NOT NULL, created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)".update.run
 
-      val insert = Update[Todo]("insert into todos (created_at, description) values (?, ?)")
-          .updateMany(Todos.todos)
+    val insert =
+      Update[Todo]("insert into todos (created_at, description) values (?, ?)")
+        .updateMany(Todos.todos)
 
-      val setup = for {
-          _ <- drop.transact(xa)
-          _ <- create.transact(xa)
-          _ <- insert.transact(xa)
-      } yield ()
+    val setup = for {
+      _ <- drop.transact(xa)
+      _ <- create.transact(xa)
+      _ <- insert.transact(xa)
+    } yield ()
 
-      val select =
-          sql"select created_at, description from todos".query[Todo].stream.transact(xa)
+    val select =
+      sql"select created_at, description from todos"
+        .query[Todo]
+        .stream
+        .transact(xa)
 
-      val output = select.evalTap { record =>
-          IO(logger.info(record.toString))
-      }.compile.drain
+    val output = select
+      .evalTap { record =>
+        IO(logger.info(record.toString))
+      }
+      .compile
+      .drain
 
-      for {
-          _ <- setup
-          _ <- output
-      } yield ExitCode.Success
+    for {
+      _ <- setup
+      _ <- output
+    } yield ExitCode.Success
 
   }
 

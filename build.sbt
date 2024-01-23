@@ -20,6 +20,7 @@ lazy val root = project
       scalaTest,
       scalaCheck,
       catsCore,
-      mockito
+      mockito,
+      aws,
     )
   )

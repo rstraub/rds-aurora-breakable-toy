@@ -18,7 +18,7 @@ import software.amazon.awssdk.auth.credentials.{
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.rds.RdsClient
 
-object Main extends App with StrictLogging {
+object Main extends IOApp with StrictLogging {
   private lazy val pooledTransactor = {
     for {
       dbConfig <- Resource.eval(IO(ConfigSource.default.loadOrThrow[DbConfig]))
@@ -36,14 +36,20 @@ object Main extends App with StrictLogging {
     } yield xa
   }
 
-  private def run(accessKeyId: String, accessKeySecret: String): Unit = {
-    val rdsClient = createRdsClient(accessKeyId, accessKeySecret)
+  def run(args: List[String]): IO[ExitCode] = {
+    val accessKeyId = args.head
+    val accessKeySecret = args.last
 
-    describeClusters(rdsClient)
-
-    crud().unsafeRunSync()
-
-    rdsClient.close()
+    for {
+      _ <- IO(logger.info("Starting RDS"))
+      rdsClient = createRdsClient(accessKeyId, accessKeySecret)
+      _ <- IO(describeClusters(rdsClient))
+      _ <- IO(logger.info("Finished RDS"))
+      _ <- IO(logger.info("Starting JDBC"))
+      _ <- crud()
+      _ <- IO(logger.info("Finished JDBC"))
+      _ <- IO(rdsClient.close())
+    } yield ExitCode.Success
   }
 
   private def createRdsClient(accessKeyId: String, accessKeySecret: String) =
@@ -102,6 +108,4 @@ object Main extends App with StrictLogging {
       } yield ExitCode.Success
     }
   }
-
-  run(args(0), args(1))
 }

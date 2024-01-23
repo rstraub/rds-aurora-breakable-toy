@@ -26,9 +26,10 @@ lazy val root = project
       "software.amazon.awssdk" % "rds" % "2.23.7",
       "org.tpolecat" %% "doobie-core" % doobieVersion,
       "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+      "org.tpolecat" %% "doobie-hikari" % doobieVersion,
       "org.tpolecat" %% "doobie-specs2" % doobieVersion,
       "com.github.pureconfig" %% "pureconfig" % "0.17.5",
       "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-      "ch.qos.logback" % "logback-classic" % "1.4.7"
+      "ch.qos.logback" % "logback-classic" % "1.4.12"
     )
   )
